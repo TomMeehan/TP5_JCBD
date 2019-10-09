@@ -82,15 +82,18 @@ public class DAO {
 	 */
 	public int numberOfOrdersForCustomer(int customerId) throws DAOException {
 		String sql = "SELECT COUNT(*) AS NUMBER_OF_ORDERS FROM PURCHASE_ORDER WHERE CUSTOMER_ID = ?";
-                
+                int result;
                 try (   Connection connection = myDataSource.getConnection();
                         PreparedStatement stmt = connection.prepareStatement(sql);) {
 			// Définir la valeur du paramètre
 			stmt.setInt(1, customerId);
-                        ResultSet rs = stmt.executeQuery();
-                        rs.next();
                         
-			return rs.getInt("NUMBER_OF_ORDERS");
+                        try(ResultSet rs = stmt.executeQuery();){
+                            rs.next();
+                            result = rs.getInt("NUMBER_OF_ORDERS");
+                        }
+                                        
+			return result;
 
 		} catch (SQLException ex) {
 			Logger.getLogger("DAO").log(Level.SEVERE, null, ex);
@@ -107,20 +110,21 @@ public class DAO {
 	 */
 	CustomerEntity findCustomer(int customerId) throws DAOException {
 		String sql = "SELECT * FROM CUSTOMER WHERE CUSTOMER_ID = ?";
-                
+                CustomerEntity customerResult;
                 try (Connection connection = myDataSource.getConnection();
 			PreparedStatement stmt = connection.prepareStatement(sql)) {
 			// Définir la valeur du paramètre
 			stmt.setInt(1, customerId);
-                        ResultSet rs = stmt.executeQuery();
-                        rs.next();
-                        CustomerEntity customerResult = new CustomerEntity(customerId, rs.getString("NAME"), rs.getString("ADDRESSLINE1"));
-			return customerResult;
+                        try(ResultSet rs = stmt.executeQuery();){
+                            rs.next();
+                            customerResult = new CustomerEntity(customerId, rs.getString("NAME"), rs.getString("ADDRESSLINE1"));
+                        }
 
 		} catch (SQLException ex) {
 			Logger.getLogger("DAO").log(Level.SEVERE, null, ex);
 			throw new DAOException(ex.getMessage());
 		}
+                return customerResult;
 	}
 
 	/**
@@ -132,23 +136,27 @@ public class DAO {
 	 */
 	List<CustomerEntity> customersInState(String state) throws DAOException {
             String sql = "SELECT * FROM CUSTOMER WHERE STATE = ?";
+            List<CustomerEntity> result;
 		try (Connection connection = myDataSource.getConnection();
 			PreparedStatement stmt = connection.prepareStatement(sql)) {
 			// Définir la valeur du paramètre
 			stmt.setString(1, state);
-                        ResultSet rs = stmt.executeQuery();
-                        List<CustomerEntity> result = new ArrayList<CustomerEntity>();
+                        try(ResultSet rs = stmt.executeQuery();){
+                            result = new ArrayList<CustomerEntity>();
                         
-                        while(rs.next()){
-                           CustomerEntity aCustomer = new CustomerEntity(rs.getInt("CUSTOMER_ID"), rs.getString("NAME"), rs.getString("ADDRESSLINE1"));
-                           result.add(aCustomer);
-                        }      
-			return result;
+                            while(rs.next()){
+                               CustomerEntity aCustomer = new CustomerEntity(rs.getInt("CUSTOMER_ID"), rs.getString("NAME"), rs.getString("ADDRESSLINE1"));
+                               result.add(aCustomer);
+                            }      
+                        }
+                        
+			
 
 		} catch (SQLException ex) {
 			Logger.getLogger("DAO").log(Level.SEVERE, null, ex);
 			throw new DAOException(ex.getMessage());
 		}
+                return result;
 	}
 
 }
